@@ -1,0 +1,6 @@
+[package]
+name = "pihole-bagger"
+version = "0.1.0"
+authors = ["cooksey <suitcase24@gmail.com>"]
+
+[dependencies]
