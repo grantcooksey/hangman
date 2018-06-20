@@ -1,9 +1,6 @@
 [package]
-name = "hangman"
+name = "test_utils"
 version = "0.1.0"
 authors = ["cooksey <suitcase24@gmail.com>"]
 
 [dependencies]
-
-[dev-dependencies]
-test_utils = { path = "test_utils" }
