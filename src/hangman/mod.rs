@@ -1,3 +1,6 @@
+use std::time::Duration;
+use std::thread::sleep;
+
 mod input;
 
 pub fn run() {
@@ -7,13 +10,15 @@ pub fn run() {
     while !game_state.has_won() {
         println!("{}", game_state.report());
 
+        sleep(Duration::from_secs(3));
         let guess = match input::get_guess() {
             input::UserGuess::Valid(c) => c,
             input::UserGuess::Invalid => {
                 println!("Bad input! Try again.");
                 continue;
             }
-        };        
+        };
+
     }
 
     //TODO validate and parse guess
@@ -32,12 +37,12 @@ struct GameState {
 // TODO add trait for secret word to make it generic for testing
 impl GameState {
     fn initialize(secret_word: String, num_guesses: i8) -> GameState {
-        if secret_word.len() < 6 || secret_word.len() > 100 { 
+        if secret_word.len() < 5 || secret_word.len() > 30 {
             panic!("Cannot initialize GameState: Secret word len out of bounds");
         }
 
         let guessed_letters = vec![false; secret_word.len()];
-        
+
         GameState {
             secret_word: secret_word,
             guessed_letters: guessed_letters,
@@ -45,20 +50,28 @@ impl GameState {
         }
     }
 
-    fn report(&self) -> &'static str {
-        "Report"
+    fn current_word(secret_word: &String, guessed_letters: &Vec<bool>) -> String {
+        secret_word.chars().zip(guessed_letters.iter())
+            .map(|zip| if *zip.1 { zip.0 } else { '_' } )
+            .collect::<String>()
+    }
+
+    fn report(&self) -> String {
+        let current_word_report = GameState::current_word(&self.secret_word, &self.guessed_letters);
+        let guesses_remaining_report = self.guesses_remaining.to_string();
+        format!("Current word: {}\nTries left: {}", current_word_report, guesses_remaining_report)
     }
 
     fn has_won(&self) -> bool {
         match self.guessed_letters.iter().position(|&x| ! x ) {
             Some(_x) => false,
-            None => true   
+            None => true
         }
     }
 
     fn match_letter(&self, letter: char) -> Vec<i8> {
         self.secret_word.chars().enumerate().fold(
-            Vec::new(), 
+            Vec::new(),
             |mut acc, (i, x)| if x == letter { acc.push(i as i8); acc } else { acc }
         )
     }
@@ -105,7 +118,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn game_state_secret_word_too_short() {
-        GameState::initialize("yo".to_string(), 5);
+        GameState::initialize("yo".to_string(), 4);
     }
 
     #[test]
@@ -142,9 +155,41 @@ mod tests {
         assert_eq!(vec![6], game_state.match_letter('g'));
     }
 
+    #[test]
+    fn current_word_multiple_matches() {
+        let secret_word = "secretword".to_string();
+        let guessed_letters = vec![true, false, false, true, false, false, false, true, false, true];
+        let current_word = GameState::current_word(&secret_word, &guessed_letters);
+        let expected_current_word = String::from("s__r___o_d");
+
+        assert_eq!(current_word, expected_current_word);
+    }
+
+    #[test]
+    fn current_word_no_matches() {
+        let secret_word = "secret".to_string();
+        let guessed_letters = vec![false, false, false, false, false];
+        let current_word = GameState::current_word(&secret_word, &guessed_letters);
+        let expected_current_word = String::from("_____");
+
+        assert_eq!(current_word, expected_current_word);
+    }
+
+    #[test]
+    fn current_word_single_matches() {
+        let secret_word = "secret".to_string();
+        let guessed_letters = vec![false, true, false, false, false];
+        let current_word = GameState::current_word(&secret_word, &guessed_letters);
+        let expected_current_word = String::from("_e___");
+
+        assert_eq!(current_word, expected_current_word);
+    }
+
     fn compare_game_state(gs1: GameState, gs2: GameState) -> bool {
-        gs1.secret_word == gs2.secret_word && 
+        gs1.secret_word == gs2.secret_word &&
         gs1.guesses_remaining == gs2.guesses_remaining &&
         gs1.guessed_letters == gs2.guessed_letters
+
+        // TODO Can use EQ trait???
     }
 }
