@@ -1,11 +1,4 @@
 [[package]]
 name = "hangman"
 version = "0.1.0"
-dependencies = [
- "test_utils 0.1.0",
-]
-
-[[package]]
-name = "test_utils"
-version = "0.1.0"
 
