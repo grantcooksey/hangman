@@ -1,7 +1,4 @@
-use std::time::Duration;
-use std::thread::sleep;
-
-mod input;
+use std::io::{ self, Read, Write };
 
 pub fn run() {
     let secret_word = generate_secret_word();
@@ -9,11 +6,11 @@ pub fn run() {
 
     while !game_state.has_won() {
         println!("{}", game_state.report());
-
-        sleep(Duration::from_secs(3));
-        let guess = match input::get_guess() {
-            input::UserGuess::Valid(c) => c,
-            input::UserGuess::Invalid => {
+        print!("Enter your guess: ");
+        io::stdout().flush();
+        let guess = match get_guess() {
+            Ok(guess) => guess,
+            Error => {
                 println!("Bad input! Try again.");
                 continue;
             }
@@ -22,6 +19,14 @@ pub fn run() {
     }
 
     //TODO validate and parse guess
+}
+
+fn get_guess() -> io::Result<char> {
+    let mut buffer = String::new();
+    io::stdin().read_line(&mut buffer).expect("Could not read line");
+    println!("{}", buffer);
+
+    Ok('c')
 }
 
 fn generate_secret_word() -> String {
