@@ -1,4 +1,7 @@
-use std::io::{ self, Read, Write };
+use std::io::{ self, Write };
+
+static BAD_INPUT_MESSAGE: &'static str = "Bad input.  Must be a single letter a-z.";
+static GUESS_MESSAGE: &'static str = "Enter your guess: ";
 
 pub fn run() {
     let secret_word = generate_secret_word();
@@ -6,12 +9,12 @@ pub fn run() {
 
     while !game_state.has_won() {
         println!("{}", game_state.report());
-        print!("Enter your guess: ");
-        io::stdout().flush();
-        let guess = match get_guess() {
+        print!("{}", GUESS_MESSAGE);
+        io::stdout().flush().expect("Failed to flush");
+        let guess: char = match get_guess() {
             Ok(guess) => guess,
-            Error => {
-                println!("Bad input! Try again.");
+            Err(e) => {
+                println!("{:?}", e);
                 continue;
             }
         };
@@ -21,12 +24,18 @@ pub fn run() {
     //TODO validate and parse guess
 }
 
-fn get_guess() -> io::Result<char> {
+fn get_guess() -> Result<char, &'static str> {
     let mut buffer = String::new();
     io::stdin().read_line(&mut buffer).expect("Could not read line");
-    println!("{}", buffer);
+    parse_input(buffer)
+}
 
-    Ok('c')
+fn parse_input(buffer: String) -> Result<char, &'static str> {
+    if buffer.len() != 1 || ! buffer.chars().next().unwrap().is_ascii() {
+        return Err(BAD_INPUT_MESSAGE)
+    }
+
+    Ok(buffer.chars().next().unwrap().to_ascii_lowercase())
 }
 
 fn generate_secret_word() -> String {
@@ -188,6 +197,36 @@ mod tests {
         let expected_current_word = String::from("_e___");
 
         assert_eq!(current_word, expected_current_word);
+    }
+
+    #[test]
+    fn parse_valid_input() {
+        let buffer = String::from("g");
+        assert_eq!(parse_input(buffer), Ok("g".chars().next().unwrap()));
+    }
+
+    #[test]
+    fn parse_empty_input() {
+        let buffer = String::from("");
+        assert_eq!(parse_input(buffer), Err(BAD_INPUT_MESSAGE));
+    }
+
+    #[test]
+    fn parse_input_too_long() {
+        let buffer = String::from("grrr");
+        assert_eq!(parse_input(buffer), Err(BAD_INPUT_MESSAGE));
+    }
+
+    #[test] 
+    fn parse_failes_on_non_ascii() {
+        let buffer = String::from("†");
+        assert_eq!(parse_input(buffer), Err(BAD_INPUT_MESSAGE));
+    }
+
+    #[test]
+    fn parse_convert_uppercase_ascii_to_lowercase() {
+        let buffer = String::from("G");
+        assert_eq!(parse_input(buffer), Ok("g".chars().next().unwrap()));
     }
 
     fn compare_game_state(gs1: GameState, gs2: GameState) -> bool {
