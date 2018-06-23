@@ -5,23 +5,28 @@ static GUESS_MESSAGE: &'static str = "Enter your guess: ";
 
 pub fn run() {
     let secret_word = generate_secret_word();
-    let game_state = GameState::initialize(secret_word, 8);
+    let mut game_state = GameState::initialize(secret_word, 8);
 
-    while !game_state.has_won() {
+    while ! game_state.has_won() && game_state.guesses_remaining > 0 {
         println!("{}", game_state.report());
         print!("{}", GUESS_MESSAGE);
         io::stdout().flush().expect("Failed to flush");
         let guess: char = match get_guess() {
             Ok(guess) => guess,
             Err(e) => {
-                println!("{:?}", e);
+                println!("{}", e);
                 continue;
             }
         };
-
+        game_state = game_state.update(guess);
+        println!("---------------");
     }
 
-    //TODO validate and parse guess
+    if game_state.has_won() {
+        println!("Congrats, you saved the man didn't hang!");
+    } else {
+        println!("Hangman died :(. Better luck next time!");
+    }
 }
 
 fn get_guess() -> Result<char, &'static str> {
@@ -31,11 +36,12 @@ fn get_guess() -> Result<char, &'static str> {
 }
 
 fn parse_input(buffer: String) -> Result<char, &'static str> {
-    if buffer.len() != 1 || ! buffer.chars().next().unwrap().is_ascii() {
+    let trimmed: &str = buffer.trim_right();
+    if trimmed.len() != 1 || ! trimmed.chars().next().unwrap().is_ascii() {
         return Err(BAD_INPUT_MESSAGE)
     }
 
-    Ok(buffer.chars().next().unwrap().to_ascii_lowercase())
+    Ok(trimmed.chars().next().unwrap().to_ascii_lowercase())
 }
 
 fn generate_secret_word() -> String {
@@ -48,7 +54,6 @@ struct GameState {
     guesses_remaining: i8,
 }
 
-// TODO add trait for secret word to make it generic for testing
 impl GameState {
     fn initialize(secret_word: String, num_guesses: i8) -> GameState {
         if secret_word.len() < 5 || secret_word.len() > 30 {
@@ -61,6 +66,16 @@ impl GameState {
             secret_word: secret_word,
             guessed_letters: guessed_letters,
             guesses_remaining: num_guesses
+        }
+    }
+
+    fn update(&self, guess: char) -> GameState {
+        let guessed_letters = GameState::join(&self.guessed_letters, self.match_letter(guess));
+        
+        GameState {
+            secret_word: self.secret_word.clone(),
+            guessed_letters: guessed_letters,
+            guesses_remaining: self.guesses_remaining - 1
         }
     }
 
@@ -83,10 +98,34 @@ impl GameState {
         }
     }
 
-    fn match_letter(&self, letter: char) -> Vec<i8> {
-        self.secret_word.chars().enumerate().fold(
+    fn match_letter(&self, letter: char) -> Vec<bool> {
+        self.secret_word.chars().fold(
             Vec::new(),
-            |mut acc, (i, x)| if x == letter { acc.push(i as i8); acc } else { acc }
+            |mut acc, x| { 
+                if x == letter { 
+                    acc.push(true);
+                } 
+                else { 
+                    acc.push(false) 
+                } 
+                
+                acc 
+            }
+        )
+    }
+
+    fn join(original_guesses: &Vec<bool>, new_guesses: Vec<bool>) -> Vec<bool> {
+        original_guesses.iter().zip(new_guesses.iter()).fold(
+            Vec::new(),
+            |mut acc, (&original, &new)| {
+                if original || new {
+                    acc.push(true);
+                } else {
+                    acc.push(false);
+                }
+
+                acc
+            }
         )
     }
 }
@@ -153,20 +192,20 @@ mod tests {
     #[test]
     fn matches_multiple() {
         let game_state = GameState::initialize("testing".to_string(), 5);
-        assert_eq!(vec![0, 3], game_state.match_letter('t'));
+        assert_eq!(vec![true, false, false, true, false, false, false], game_state.match_letter('t'));
     }
 
     #[test]
     fn matches_if_not_in() {
         let game_state = GameState::initialize("testing".to_string(), 5);
-        let expected_matches: Vec<i8> = Vec::new();
+        let expected_matches: Vec<bool> = vec![false; 7];
         assert_eq!(expected_matches, game_state.match_letter('x'));
     }
 
     #[test]
     fn matches_single() {
         let game_state = GameState::initialize("testing".to_string(), 5);
-        assert_eq!(vec![6], game_state.match_letter('g'));
+        assert_eq!(vec![false, false, false, false, false, false, true], game_state.match_letter('g'));
     }
 
     #[test]
