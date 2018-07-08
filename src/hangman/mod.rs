@@ -8,18 +8,22 @@ pub fn run() {
     let mut game_state = GameState::initialize(secret_word, 8);
 
     while ! game_state.has_won() && game_state.guesses_remaining > 0 {
+        // Print the state of the hangman game
         println!("{}", game_state.report());
         print!("{}", GUESS_MESSAGE);
         io::stdout().flush().expect("Failed to flush");
+
         let guess: char = match get_guess() {
             Ok(guess) => guess,
             Err(e) => {
+                clear_screen();
                 println!("{}", e);
                 continue;
             }
         };
         game_state = game_state.update(guess);
-        println!("---------------");
+
+       clear_screen();
     }
 
     if game_state.has_won() {
@@ -27,6 +31,12 @@ pub fn run() {
     } else {
         println!("Hangman died :(. Better luck next time!");
     }
+}
+
+fn clear_screen() {
+    // erase text and move cursor to the home position, see VT100 terminal control
+    print!("{}[2J", 27 as char);
+    print!("{}[H", 27 as char);
 }
 
 fn get_guess() -> Result<char, &'static str> {
