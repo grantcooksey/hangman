@@ -114,7 +114,14 @@ impl GameState {
     fn report(&self) -> String {
         let current_word_report = GameState::current_word(&self.secret_word, &self.matched_letters);
         let guesses_remaining_report = self.guesses_remaining.to_string();
-        format!("Current word: {}\nTries left: {}", current_word_report, guesses_remaining_report)
+        let guessed_letters = self.guessed_letters.iter().collect::<String>().replace("", " ");
+        
+        format!(
+            "Current word: {}\nTries left: {}\nGuessed letters:{}", 
+            current_word_report, 
+            guesses_remaining_report, 
+            guessed_letters
+        )
     }
 
     fn has_won(&self) -> bool {
@@ -159,10 +166,6 @@ impl GameState {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // TODO ? pub trait GameStateTestExt {
-
-    // }
 
     #[test]
     fn game_state_has_won() {
