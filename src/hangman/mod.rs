@@ -22,7 +22,7 @@ pub fn run() {
                 println!("{}", e);
                 continue;
             }
-        };
+        };    
         game_state = game_state.update(guess);
 
         clear_screen();
@@ -85,15 +85,34 @@ impl GameState {
     }
 
     fn update(&self, guess: char) -> GameState {
-        let guessed_letters = self.build_guessed_letters(&guess);
-        let matched_letters = GameState::join(&self.matched_letters, self.match_letter(guess));
+        let new_matched_letters = GameState::join(&self.matched_letters, self.match_letter(guess));
+        
+        let new_guesses_remaining = if self.not_guessed(guess) && self.not_match(guess) {
+            self.guesses_remaining - 1
+        } else {
+            self.guesses_remaining
+        };
+
+        let new_guessed_letters = if self.not_guessed(guess) {
+            self.build_guessed_letters(&guess)
+        } else {
+            self.guessed_letters.to_owned()
+        };
         
         GameState {
-            secret_word: self.secret_word.clone(),
-            matched_letters: matched_letters,
-            guesses_remaining: self.guesses_remaining - 1,
-            guessed_letters: guessed_letters
+            secret_word: self.secret_word.to_owned(),
+            matched_letters: new_matched_letters,
+            guesses_remaining: new_guesses_remaining,
+            guessed_letters: new_guessed_letters
         }
+    }
+
+    fn not_match(&self, guess: char) -> bool {
+        ! self.secret_word.contains(guess)
+    }
+
+    fn not_guessed(&self, guess: char) -> bool {
+        ! self.guessed_letters.contains(&guess)
     }
 
     fn build_guessed_letters(&self, guess: &char) -> Vec<char> {
@@ -117,7 +136,7 @@ impl GameState {
         let guessed_letters = self.guessed_letters.iter().collect::<String>().replace("", " ");
         
         format!(
-            "Current word: {}\nTries left: {}\nGuessed letters:{}", 
+            "Current word: {}\nLives left: {}\nGuessed letters:{}", 
             current_word_report, 
             guesses_remaining_report, 
             guessed_letters
@@ -235,9 +254,9 @@ mod tests {
 
         let expected_state = GameState {
             secret_word: "testss".to_string(),
-            guesses_remaining: 4,
+            guesses_remaining: 5,
             matched_letters: vec![true, true, false, true, false, false],
-            guessed_letters: vec!['g', 'r', 't']
+            guessed_letters: vec!['g', 'r', guess]
         };
 
         assert_eq!(state.update(guess), expected_state);
@@ -259,6 +278,27 @@ mod tests {
             guesses_remaining: 2,
             matched_letters: vec![false, true, false, false, false, false],
             guessed_letters: vec!['g', 'r', guess]
+        };
+
+        assert_eq!(state.update(guess), expected_state);
+    }
+
+    #[test]
+    fn update_previous_guess() {
+        let state = GameState {
+            secret_word: "testss".to_string(),
+            guesses_remaining: 3,
+            matched_letters: vec![false, true, false, false, false, false],
+            guessed_letters: vec!['g', 'r']
+        };
+
+        let guess = 'r';
+
+        let expected_state = GameState {
+            secret_word: "testss".to_string(),
+            guesses_remaining: 3,
+            matched_letters: vec![false, true, false, false, false, false],
+            guessed_letters: vec!['g', 'r']
         };
 
         assert_eq!(state.update(guess), expected_state);
@@ -300,7 +340,7 @@ mod tests {
 
         assert_eq!(GameState::join(&original_matches, new_matches), expected_matches);
     }
-// 
+ 
     #[test]
     fn join_some_matches() {
         let original_matches = vec![true, false, true];
