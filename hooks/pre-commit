@@ -1,0 +1,10 @@
+#!/bin/sh
+#
+
+if cargo test; then
+   echo "pre-commit: tests pass :)"
+   exit 0
+else
+   echo "pre-commit: tests failed :("
+   exit 1
+fi
