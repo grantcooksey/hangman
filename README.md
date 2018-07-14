@@ -17,4 +17,4 @@ crazy.  Oh well, next time I'll get wild. I feel like I am following the path of
 by borrow-checker errors.  A couple things still puzzle me...
 * There seems to be many instances of return types of `Option<Result<_,_>>`, is there an idiomatic way of getting th data out other than `.unwrap().unwrap()`?
 * I've been using the Spock testing framework and have probably gotten lazy, but I feel like mocking 
-services or resources here would be pretty painful in a large project.  Most likely this due to a lack of experience with multiple testing patterns on my part.
+services or resources here would be pretty painful in a large project.  Most likely this due to a lack of experience with different testing patterns on my part.
