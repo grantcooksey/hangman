@@ -6,7 +6,7 @@ static BAD_INPUT_MESSAGE: &'static str = "Bad input.  Must be a single letter a-
 static GUESS_MESSAGE: &'static str = "Enter your guess: ";
 
 pub fn run() {
-    let secret_word = secret_word::generate_secret_word();
+    let secret_word = secret_word::generate_secret_word().expect("Failed to generate a secret word!");
     let mut game_state = GameState::initialize(secret_word, 8);
 
     clear_screen();
