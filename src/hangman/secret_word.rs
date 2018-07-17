@@ -5,7 +5,7 @@ use std::fs::File;
 use self::rand::{thread_rng, Rng};
 
 pub fn generate_secret_word() -> Result<String> {
-    let file = try!(File::open(String::from("./resources/words.txt")));
+    let file = File::open(String::from("./resources/words.txt"))?;
     let reader = BufReader::new(file);
 
     let mut secret_word = Ok(String::from("fake"));
