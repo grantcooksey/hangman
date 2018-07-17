@@ -51,11 +51,11 @@ fn get_guess() -> Result<char, &'static str> {
 
 fn parse_input(buffer: String) -> Result<char, &'static str> {
     let trimmed: &str = buffer.trim_right();
-    if trimmed.len() != 1 || ! trimmed.chars().next().unwrap().is_ascii() {
-        return Err(BAD_INPUT_MESSAGE)
-    }
 
-    Ok(trimmed.chars().next().unwrap().to_ascii_lowercase())
+    match trimmed.chars().next() {
+        Some(c) if c.is_ascii() && trimmed.len() == 1 => Ok(c.to_ascii_lowercase()),
+        _ => Err(BAD_INPUT_MESSAGE)
+    }
 }
 
 #[derive(PartialEq, Debug)]
