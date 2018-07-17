@@ -62,12 +62,12 @@ fn parse_input(buffer: String) -> Result<char, &'static str> {
 struct GameState {
     secret_word: String,
     matched_letters: Vec<bool>,
-    guesses_remaining: i8,
+    guesses_remaining: u8,
     guessed_letters: Vec<char>,
 }
 
 impl GameState {
-    fn initialize(secret_word: String, num_guesses: i8) -> GameState {
+    fn initialize(secret_word: String, num_guesses: u8) -> GameState {
         if secret_word.len() > 30 {
             panic!("Cannot initialize GameState: Secret word len out of bounds");
         }
