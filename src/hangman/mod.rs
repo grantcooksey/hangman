@@ -82,7 +82,7 @@ impl GameState {
         }
     }
 
-    fn update(&self, guess: char) -> GameState {
+    fn update(self, guess: char) -> GameState {
         let new_matched_letters = GameState::join(&self.matched_letters, self.match_letter(guess));
         
         let new_guesses_remaining = if self.not_guessed(guess) && self.not_match(guess) {
