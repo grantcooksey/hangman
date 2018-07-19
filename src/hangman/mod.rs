@@ -1,12 +1,13 @@
-use std::io::{ self, Write };
-
 mod secret_word;
+mod hangman_error;
 
-static BAD_INPUT_MESSAGE: &'static str = "Bad input.  Must be a single letter a-z.";
+use std::io::{ self, Write };
+use self::hangman_error::HangmanError;
+
 static GUESS_MESSAGE: &'static str = "Enter your guess: ";
 
-pub fn run() {
-    let secret_word = secret_word::generate_secret_word().expect("Failed to generate a secret word!");
+pub fn run() -> Result<String, HangmanError> {
+    let secret_word = secret_word::generate_secret_word()?;
     let mut game_state = GameState::initialize(secret_word, 8);
 
     clear_screen();
@@ -15,7 +16,7 @@ pub fn run() {
         // Print the state of the hangman game
         println!("{}", game_state.report());
         print!("{}", GUESS_MESSAGE);
-        io::stdout().flush().expect("Failed to flush");
+        io::stdout().flush()?;
 
         let guess: char = match get_guess() {
             Ok(guess) => guess,
@@ -31,9 +32,9 @@ pub fn run() {
     }
 
     if game_state.has_won() {
-        println!("Congrats, you won! The man didn't hang!");
+        Ok(format!("The word was {}! Congrats, you won! The man didn't hang!", game_state.secret_word))
     } else {
-        println!("The word was {}! Hangman died :( Better luck next time!", game_state.secret_word);
+        Ok(format!("The word was {}! Hangman died :( Better luck next time!", game_state.secret_word))
     }
 }
 
@@ -43,18 +44,18 @@ fn clear_screen() {
     print!("{}[H", 27 as char);
 }
 
-fn get_guess() -> Result<char, &'static str> {
+fn get_guess() -> Result<char, HangmanError> {
     let mut buffer = String::new();
-    io::stdin().read_line(&mut buffer).expect("Could not read line");
+    io::stdin().read_line(&mut buffer)?;
     parse_input(buffer)
 }
 
-fn parse_input(buffer: String) -> Result<char, &'static str> {
+fn parse_input(buffer: String) -> Result<char, HangmanError> {
     let trimmed: &str = buffer.trim_right();
 
     match trimmed.chars().next() {
         Some(c) if c.is_ascii() && trimmed.len() == 1 => Ok(c.to_ascii_lowercase()),
-        _ => Err(BAD_INPUT_MESSAGE)
+        _ => Err(HangmanError::BadInput)
     }
 }
 
@@ -68,10 +69,6 @@ struct GameState {
 
 impl GameState {
     fn initialize(secret_word: String, num_guesses: u8) -> GameState {
-        if secret_word.len() > 30 {
-            panic!("Cannot initialize GameState: Secret word len out of bounds");
-        }
-
         let matched_letters = vec![false; secret_word.len()];
 
         GameState {
@@ -215,14 +212,6 @@ mod tests {
             guessed_letters: Vec::new()
         };
         assert!(won_game.has_won());
-    }
-
-    // TODO port this over to the secret word module
-    #[test]
-    #[ignore]
-    #[should_panic]
-    fn game_state_secret_word_too_short() {
-        GameState::initialize("yo".to_string(), 4);
     }
 
     #[test]
@@ -402,30 +391,30 @@ mod tests {
     #[test]
     fn parse_valid_input() {
         let buffer = String::from("g");
-        assert_eq!(parse_input(buffer), Ok("g".chars().next().unwrap()));
+        assert_eq!(parse_input(buffer), Ok(buffer));
     }
 
     #[test]
     fn parse_empty_input() {
         let buffer = String::from("");
-        assert_eq!(parse_input(buffer), Err(BAD_INPUT_MESSAGE));
+        assert_eq!(parse_input(buffer), Err(HangmanError::BadInput));
     }
 
     #[test]
     fn parse_input_too_long() {
         let buffer = String::from("grrr");
-        assert_eq!(parse_input(buffer), Err(BAD_INPUT_MESSAGE));
+        assert_eq!(parse_input(buffer), Err(HangmanError::BadInput));
     }
 
     #[test] 
     fn parse_failes_on_non_ascii() {
         let buffer = String::from("†");
-        assert_eq!(parse_input(buffer), Err(BAD_INPUT_MESSAGE));
+        assert_eq!(parse_input(buffer), Err(HangmanError::BadInput));
     }
 
     #[test]
     fn parse_convert_uppercase_ascii_to_lowercase() {
         let buffer = String::from("G");
-        assert_eq!(parse_input(buffer), Ok("g".chars().next().unwrap()));
+        assert_eq!(parse_input(buffer).unwrap(), "g".chars().next().unwrap());
     }
 }

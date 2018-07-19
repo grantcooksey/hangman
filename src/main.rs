@@ -2,6 +2,8 @@ mod hangman;
 
 fn main() {
     println!("Welcome to hangman!");
-    hangman::run();
-    println!("Thanks for playing!");
+    match hangman::run() {
+        Ok(s) => println!("{}", s),
+        Err(e) => println!("Uh ok, something went wrong... {}", e)
+    };
 }
