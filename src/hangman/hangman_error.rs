@@ -1,7 +1,7 @@
 use std::io;
 use std::fmt::{Display, Formatter, Result};
 
-#[derive(Debug)]
+#[derive(PartialEq, Debug)]
 pub enum HangmanError {
     SecretWordLen,
     SecretWordFile, 

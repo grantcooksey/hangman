@@ -391,25 +391,25 @@ mod tests {
     #[test]
     fn parse_valid_input() {
         let buffer = String::from("g");
-        assert_eq!(parse_input(buffer), Ok(buffer));
+        assert_eq!(parse_input(buffer.clone()).unwrap(), buffer.chars().next().unwrap());
     }
 
     #[test]
     fn parse_empty_input() {
         let buffer = String::from("");
-        assert_eq!(parse_input(buffer), Err(HangmanError::BadInput));
+        assert_eq!(parse_input(buffer).unwrap_err(), HangmanError::BadInput);
     }
 
     #[test]
     fn parse_input_too_long() {
         let buffer = String::from("grrr");
-        assert_eq!(parse_input(buffer), Err(HangmanError::BadInput));
+        assert_eq!(parse_input(buffer).unwrap_err(), HangmanError::BadInput);
     }
 
-    #[test] 
+    #[test]
     fn parse_failes_on_non_ascii() {
         let buffer = String::from("†");
-        assert_eq!(parse_input(buffer), Err(HangmanError::BadInput));
+        assert_eq!(parse_input(buffer).unwrap_err(), HangmanError::BadInput);
     }
 
     #[test]
